@@ -17,7 +17,6 @@ class ReanalysisProcessing:
         preprocess: list | str = [],
         work_dir: str = ".",
     ) -> pf.Task:
-
         script = [
             *([preprocess] if isinstance(preprocess, str) else preprocess),
             dedent("""

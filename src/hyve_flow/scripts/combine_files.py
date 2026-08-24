@@ -7,19 +7,18 @@ from pathlib import Path
 import xarray as xr
 from annotated_types import Annotated
 from conflator import CLIArg
-from pydantic import Field, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class StrictBaseModel(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
+
 class CombineFileConfig(StrictBaseModel):
     reference_file: Annotated[
         str,
         CLIArg("--reference-file"),
-        Field(
-            description="Archived data set to append retrieved data sets to"
-        ),
+        Field(description="Archived data set to append retrieved data sets to"),
     ]
     extracted_stations: Annotated[
         str,
@@ -40,6 +39,7 @@ class CombineFileConfig(StrictBaseModel):
         ),
     ]
 
+
 def combine(config: CombineFileConfig):
     shutil.copy(config.reference_file, config.store)
 
@@ -54,11 +54,7 @@ def combine(config: CombineFileConfig):
     )
 
     all_ds = [
-        (
-            xr.open_dataset(ff).assign_coords(
-                station=lambda ds: ds.station.astype("<U6")
-            )
-        )
+        (xr.open_dataset(ff).assign_coords(station=lambda ds: ds.station.astype("<U6")))
         for ff in files
     ]
 
@@ -70,5 +66,3 @@ def combine(config: CombineFileConfig):
     os.rename(config.store, backup_store)
 
     merged.to_netcdf(config.store)
-
-

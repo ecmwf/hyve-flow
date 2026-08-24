@@ -1,0 +1,25 @@
+name: ci
+
+on:
+  push:
+    branches: [ "main", "develop" ]
+  pull_request:
+    branches: [ "main", "develop" ]
+
+jobs:
+  qa-pre-commit:
+    uses: ecmwf/reusable-workflows/.github/workflows/qa-precommit-run.yml@v2
+    secrets: inherit
+
+  test:
+    uses: ecmwf/reusable-workflows/.github/workflows/qa-pytest-pyproject.yml@v2
+    secrets: inherit
+    with:
+      # This project's extra is `test`; the workflow default is `all,tests`,
+      # neither of which exists here. The pyflow tests skip in CI because the
+      # ecflow bindings are not distributed on PyPI.
+      optional-dependencies: 'test'
+
+  # qa-python:
+  #     uses: ecmwf/reusable-workflows/.github/workflows/ci-python.yml@v2
+  #     secrets: inherit

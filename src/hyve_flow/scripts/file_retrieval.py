@@ -14,6 +14,7 @@ from pydantic import AfterValidator, Field, ConfigDict, BaseModel
 
 logger = logging.getLogger(__name__)
 
+
 def parse_ensemble_range(entry) -> list[int]:
     try:
         number_int = int(entry)
@@ -65,9 +66,11 @@ def parse_remapping(entry) -> dict:
         return remaps
     else:
         raise ValueError("Remapping must be a string or a dictionary.")
-    
+
+
 class StrictBaseModel(BaseModel):
     model_config = ConfigDict(extra="forbid")
+
 
 class FileRetrievalConfig(StrictBaseModel):
     target_file = Annotated[
@@ -203,9 +206,7 @@ def download(config: FileRetrievalConfig):
                     files = [m for m in tar.getmembers() if m.isfile()]
                     assert len(files) == 1
                     output_reforecast_file = files[0].name
-                    dname = os.path.dirname(
-                        os.path.realpath(output_reforecast_file)
-                    )
+                    dname = os.path.dirname(os.path.realpath(output_reforecast_file))
                     os.makedirs(dname, exist_ok=True)
                     # If all is expected, extracts the file in the same directory as it was downloaded
                     extracted = tar.extractfile(files[0])
