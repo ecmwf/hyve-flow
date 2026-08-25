@@ -1,7 +1,7 @@
 from textwrap import dedent
-from wellies import ToolStore
 
 import pyflow as pf
+from wellies import ToolStore
 
 
 class ReanalysisProcessing:
@@ -14,12 +14,11 @@ class ReanalysisProcessing:
         self,
         config_script,
         task_args: dict,
-        preprocess: list | str = [],
+        preprocess: list | str | None = None,
         work_dir: str = ".",
     ) -> pf.Task:
-
         script = [
-            *([preprocess] if isinstance(preprocess, str) else preprocess),
+            *([preprocess] if isinstance(preprocess, str) else (preprocess or [])),
             dedent("""
                 mkdir -p $WORKDIR
                 cd $WORKDIR
