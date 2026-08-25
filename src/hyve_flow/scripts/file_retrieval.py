@@ -1,29 +1,39 @@
 #! /usr/bin/env python3
+#
+# /// script
+# dependencies = [
+#   "annotated-types",
+#   "conflator",
+#   "earthkit-data",
+#   "earthkit-time",
+# ]
+# ///
 import logging
 import os
 import sys
 import tarfile
 from datetime import date, datetime
+from typing import Any, SupportsInt
 
 import earthkit.data as ekd
 import xarray as xr
 from annotated_types import Annotated
 from conflator import CLIArg
 from earthkit.time import Sequence
-from pydantic import AfterValidator, Field, ConfigDict, BaseModel
+from pydantic import AfterValidator, BaseModel, ConfigDict, Field
 
 logger = logging.getLogger(__name__)
 
 
-def parse_ensemble_range(entry) -> list[int]:
+def parse_ensemble_range(entry: SupportsInt | str) -> list[int]:
     try:
         number_int = int(entry)
         return list(range(number_int + 1))
     except (ValueError, TypeError):
-        if "-" in entry:
+        if isinstance(entry, str) and "-" in entry:
             start, end = map(int, entry.split("-"))
             return list(range(start, end + 1))
-        elif "," in entry:
+        elif isinstance(entry, str) and "," in entry:
             return [int(num.strip()) for num in entry.split(",")]
         else:
             raise ValueError(
@@ -32,7 +42,7 @@ def parse_ensemble_range(entry) -> list[int]:
             )
 
 
-def parse_isodate(entry) -> date:
+def parse_isodate(entry: str) -> date:
     try:
         return date.fromisoformat(entry)
     except ValueError:
@@ -48,7 +58,7 @@ def parse_isodate(entry) -> date:
                 )
 
 
-def parse_remapping(entry) -> dict:
+def parse_remapping(entry: str | dict[str, str]) -> dict[str, str]:
     if entry is None:
         return {}
     elif isinstance(entry, dict):
@@ -60,9 +70,7 @@ def parse_remapping(entry) -> dict:
                 original, new = pair.split(":")
                 remaps[original.strip()] = new.strip()
             except ValueError:
-                raise ValueError(
-                    f"Invalid remapping pair '{pair}'. Use 'original:new' format."
-                )
+                raise ValueError(f"Invalid remapping pair '{pair}'. Use 'original:new' format.")
         return remaps
     else:
         raise ValueError("Remapping must be a string or a dictionary.")
@@ -89,23 +97,24 @@ class FileRetrievalConfig(StrictBaseModel):
     sequence_key = Annotated[
         str,
         CLIArg("--earthkit-sequence"),
-        Field(description="Key to use to retrieve day sequence from earthkit"),
-    ] = "ecmwf-4days"
+        Field(description="Key to use to retrieve day sequence from earthkit", default="ecmwf-4days"),
+    ]
     hindcast_years = Annotated[
         int,
         CLIArg("--hindcast"),
-        Field(description="How many years of data to retrieve"),
-    ] = 20
+        Field(description="How many years of data to retrieve", default=20),
+    ]
     data_source = Annotated[
         str,
         CLIArg("--data-source"),
-        Field(description="Which data source to retrieve data from"),
-    ] = "ecfs"
+        Field(description="Which data source to retrieve data from", default="ecfs"),
+    ]
     ensemble = Annotated[
         str | int,
         CLIArg("--number"),
         Field(
             description="Number of ensemble members to retrieve",
+            default=10,
             examples=[
                 "10",
                 "0-10",
@@ -113,51 +122,53 @@ class FileRetrievalConfig(StrictBaseModel):
             ],
         ),
         AfterValidator(parse_ensemble_range),
-    ] = 10
+    ]
     output_dir = Annotated[
         str,
         CLIArg("--output"),
         Field(description="Where to store the output of this data dowload"),
     ]
     base_date = Annotated[
-        str,
+        str | None,
         CLIArg("--base-date"),
         Field(
             description="base date for the reforecast reference dates to retrieve.",
+            default=None,
             examples=[
                 "2023-01-01",
                 "20230101",
             ],
         ),
         AfterValidator(parse_isodate),
-    ] = None
+    ]
     bracket_size = Annotated[
         int,
         CLIArg("--bracket-size"),
         Field(
             description=(
-                "Size of the bracket, in days, to use to retrieve reference dates, "
-                "before and after <base-date>."
-            )
+                "Size of the bracket, in days, to use to retrieve reference dates, before and after <base-date>."
+            ),
+            default=4,
         ),
-    ] = 4
+    ]
     overwrite = Annotated[
         bool,
         CLIArg("--overwrite", action="store_true"),
-        Field(description="Whether to overwrite existing files or not"),
-    ] = False
+        Field(description="Whether to overwrite existing files or not", default=False),
+    ]
     remapping = Annotated[
-        str | dict | None,
+        str | dict[str, Any] | None,
         CLIArg("--remapping"),
         Field(
             description=(
                 "Remapping to apply to the data. Can be a string with comma separated remaps pairs,"
                 "predefined remapping, or a dictionary with the remapping parameters. "
                 "Left-hand side name must exist in the original dataset."
-            )
+            ),
+            default=None,
         ),
         AfterValidator(parse_remapping),
-    ] = None
+    ]
 
 
 def download(config: FileRetrievalConfig):
@@ -166,9 +177,7 @@ def download(config: FileRetrievalConfig):
         base_date = date.today()
     else:
         base_date = config.base_date
-    reference_dates = sequence.bracket(
-        base_date, config.date_bracket_size, strict=False
-    )
+    reference_dates = sequence.bracket(base_date, config.bracket_size, strict=False)
 
     # Loops over each year to retrieve the reforecast for each year
     merged_output = f"{config.output_dir}/{base_date:%Y%m%d}"
@@ -183,7 +192,7 @@ def download(config: FileRetrievalConfig):
                 print(f"File {outname} already exists, skipping download.")
                 continue
             ensemble_files = []
-            for number in config.number:
+            for number in config.ensemble:
                 path = config.target_file.format(
                     reference_date=ref_date,
                     valid_date=valid_date,
@@ -210,15 +219,16 @@ def download(config: FileRetrievalConfig):
                     os.makedirs(dname, exist_ok=True)
                     # If all is expected, extracts the file in the same directory as it was downloaded
                     extracted = tar.extractfile(files[0])
+                    if extracted is None:
+                        logger.error(f"Failed to extract {files[0].name} from {output_tar}. Skipping this file.")
+                        continue
                     with open(output_reforecast_file, "wb") as f:
                         f.write(extracted.read())
                     ensemble_files.append(output_reforecast_file)
                 os.remove(output_tar)
 
             (
-                xr.open_mfdataset(
-                    ensemble_files, combine="nested", concat_dim="ensemble"
-                )
+                xr.open_mfdataset(ensemble_files, combine="nested", concat_dim="ensemble")
                 .rename(config.remapping)
                 .to_netcdf(outname)
             )

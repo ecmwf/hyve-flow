@@ -23,16 +23,12 @@ class TestTaskAttributes:
         assert task.name == "extract_stations"
 
     def test_explicit_name_is_respected(self, processing, config_script):
-        task = processing.build_extraction_task(
-            config_script, task_args={"name": "extract_glofas"}
-        )
+        task = processing.build_extraction_task(config_script, task_args={"name": "extract_glofas"})
 
         assert task.name == "extract_glofas"
 
     def test_workdir_variable_comes_from_work_dir(self, processing, config_script):
-        task = processing.build_extraction_task(
-            config_script, task_args={}, work_dir="/scratch/run"
-        )
+        task = processing.build_extraction_task(config_script, task_args={}, work_dir="/scratch/run")
 
         variables = {v.name: v.value for v in task.variables}
         assert variables["WORKDIR"] == "/scratch/run"
@@ -40,9 +36,7 @@ class TestTaskAttributes:
 
 class TestConfigScriptContract:
     def test_receives_the_station_extraction_section(self, processing, config_script):
-        processing.build_extraction_task(
-            config_script, task_args={}, work_dir="/scratch/run"
-        )
+        processing.build_extraction_task(config_script, task_args={}, work_dir="/scratch/run")
 
         assert config_script.calls == [
             {
@@ -62,9 +56,7 @@ class TestConfigScriptContract:
 
 
 class TestScriptContents:
-    def test_body_runs_the_extraction_in_the_work_directory(
-        self, processing, config_script
-    ):
+    def test_body_runs_the_extraction_in_the_work_directory(self, processing, config_script):
         task = processing.build_extraction_task(config_script, task_args={})
 
         script = task.script.value
@@ -73,28 +65,20 @@ class TestScriptContents:
         assert "hyve-extract-timeseries extract.yaml" in script
 
     def test_tools_are_loaded_before_anything_else(self, processing, config_script):
-        task = processing.build_extraction_task(
-            config_script, task_args={}, preprocess="# preprocess"
-        )
+        task = processing.build_extraction_task(config_script, task_args={}, preprocess="# preprocess")
 
         script = task.script.value
-        assert script.index("# load tools for hpc") < script.index(
-            "# write extract.yaml"
-        )
+        assert script.index("# load tools for hpc") < script.index("# write extract.yaml")
         assert script.index("# write extract.yaml") < script.index("# preprocess")
         assert script.index("# preprocess") < script.index("mkdir -p $WORKDIR")
 
     def test_preprocess_accepts_a_bare_string(self, processing, config_script):
-        task = processing.build_extraction_task(
-            config_script, task_args={}, preprocess="# single line"
-        )
+        task = processing.build_extraction_task(config_script, task_args={}, preprocess="# single line")
 
         assert "# single line" in task.script.value
 
     def test_preprocess_accepts_a_list(self, processing, config_script):
-        task = processing.build_extraction_task(
-            config_script, task_args={}, preprocess=["# first", "# second"]
-        )
+        task = processing.build_extraction_task(config_script, task_args={}, preprocess=["# first", "# second"])
 
         script = task.script.value
         assert "# first" in script

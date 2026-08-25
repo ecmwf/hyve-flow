@@ -37,15 +37,15 @@ dependencies = [
     documentation = "https://github.com/ecmwf/hyve-flow"
     issues = "https://github.com/ecmwf/hyve-flow/issues"
 
-[project.optional-dependencies]
+[dependency-groups]
+dev = [
+    { include-group = "test" },
+    "mypy>=2.3.1",
+    "pre-commit",
+]
 test = [
     "pytest",
     "pytest-cov",
-]
-dev = [
-    "pytest",
-    "pytest-cov",
-    "pre-commit",
 ]
 # What the deployed task scripts import. Installed for local work on them; not
 # required to build a suite.
@@ -59,6 +59,9 @@ scripts = [
     "xarray",
 ]
 
+[tool.mypy]
+disable_error_code = ["import-untyped"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 filterwarnings = [
@@ -67,16 +70,11 @@ filterwarnings = [
 	"ignore:numpy.ndarray size changed"
 ]
 
-[tool.black]
-line-length = 88
-skip-string-normalization = false
-
-[tool.isort]
-profile = "black"
-line_length = 88
-
 [tool.ruff]
-line-length = 88
+line-length = 120
+lint.ignore = [
+    "DTZ",  # timezone-aware datetime objects (flake8-datetimez)
+]
 
 [tool.setuptools.packages.find]
 include = [ "hyve_flow*" ]

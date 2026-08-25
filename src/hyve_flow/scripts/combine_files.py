@@ -43,20 +43,13 @@ class CombineFileConfig(StrictBaseModel):
 def combine(config: CombineFileConfig):
     shutil.copy(config.reference_file, config.store)
 
-    files = sorted(
-        glob.glob(os.path.join(config.extracted_stations, config.file_pattern))
-    )
+    files = sorted(glob.glob(os.path.join(config.extracted_stations, config.file_pattern)))
 
     print(f"Found files: {[Path(p).name for p in files]}")
 
-    ref_df = xr.open_dataset(config.store).assign_coords(
-        station=lambda ds: ds.station.astype("<U6")
-    )
+    ref_df = xr.open_dataset(config.store).assign_coords(station=lambda ds: ds.station.astype("<U6"))
 
-    all_ds = [
-        (xr.open_dataset(ff).assign_coords(station=lambda ds: ds.station.astype("<U6")))
-        for ff in files
-    ]
+    all_ds = [(xr.open_dataset(ff).assign_coords(station=lambda ds: ds.station.astype("<U6"))) for ff in files]
 
     merged = xr.concat([ref_df] + all_ds, dim="time").sortby("time")
 

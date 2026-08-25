@@ -17,12 +17,8 @@ pytest.importorskip(
 
 
 @pytest.mark.parametrize("forbidden", ["hyve_flow", "hyve-flow", "pip install"])
-def test_generated_script_does_not_reference_this_package(
-    processing, config_script, forbidden
-):
-    task = processing.build_extraction_task(
-        config_script, task_args={}, preprocess=["# preprocess"]
-    )
+def test_generated_script_does_not_reference_this_package(processing, config_script, forbidden):
+    task = processing.build_extraction_task(config_script, task_args={}, preprocess=["# preprocess"])
 
     assert forbidden not in task.script.value
 
