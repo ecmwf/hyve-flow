@@ -1,0 +1,44 @@
+from textwrap import dedent
+
+import pyflow as pf
+from wellies import ToolStore
+
+
+class ReanalysisProcessing:
+    def __init__(self, config: dict, tools: ToolStore, exec_env: str):
+        self.config = config
+        self.tools = tools
+        self.exec_env = exec_env
+
+    def build_extraction_task(
+        self,
+        config_script,
+        task_args: dict,
+        preprocess: list | str | None = None,
+        work_dir: str = ".",
+    ) -> pf.Task:
+        script = [
+            *([preprocess] if isinstance(preprocess, str) else (preprocess or [])),
+            dedent("""
+                mkdir -p $WORKDIR
+                cd $WORKDIR
+                hyve-extract-timeseries extract.yaml
+            """),
+        ]
+
+        task_args.setdefault("name", "extract_stations")
+        extraction_config = self.config.get("station_extraction")
+
+        return pf.Task(
+            variables={"WORKDIR": work_dir},
+            script=[
+                self.tools.load(self.exec_env),
+                *config_script(
+                    config=extraction_config,
+                    output_file="extract.yaml",
+                    work_dir=work_dir,
+                ),
+                *script,
+            ],
+            **task_args,
+        )

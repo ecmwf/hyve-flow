@@ -1,0 +1,90 @@
+[build-system]
+requires = ["setuptools>=65", "setuptools_scm[toml]>=6.2"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hyve-flow"
+requires-python = ">=3.11"
+authors = [
+    {name = "European Centre for Medium-Range Weather Forecasts (ECMWF)", email = "software.support@ecmwf.int"},
+]
+license = { text = "Apache License Version 2.0" }
+description = "Tools and utilities for hydrological verification"
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Intended Audience :: Science/Research",
+    "Natural Language :: English",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering"
+    ]
+dynamic = ["version", "readme"]
+
+# Only what `import hyve_flow` needs. The task scripts under hyve_flow/scripts/
+# run in the separately provisioned task environment, so their imports belong in
+# the `scripts` extra below rather than here.
+dependencies = [
+    "pyflow-workflow-generator",
+    "pyflow-wellies",
+]
+
+[project.urls]
+    repository = "https://github.com/ecmwf/hyve-flow"
+    documentation = "https://github.com/ecmwf/hyve-flow"
+    issues = "https://github.com/ecmwf/hyve-flow/issues"
+
+[dependency-groups]
+dev = [
+    { include-group = "test" },
+    "mypy>=2.3.1",
+    "pre-commit",
+]
+test = [
+    "pytest",
+    "pytest-cov",
+]
+# What the deployed task scripts import. Installed for local work on them; not
+# required to build a suite.
+scripts = [
+    "annotated-types",
+    "conflator",
+    "earthkit-data",
+    "earthkit-time",
+    "hydro-verification",
+    "pydantic",
+    "xarray",
+]
+
+[tool.mypy]
+disable_error_code = ["import-untyped"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+filterwarnings = [
+	# This warning is raised due to netcdf4 but likely is harmless. See
+	# https://github.com/Unidata/netcdf4-python/issues/1354 for more context.
+	"ignore:numpy.ndarray size changed"
+]
+
+[tool.ruff]
+line-length = 120
+lint.ignore = [
+    "DTZ",  # timezone-aware datetime objects (flake8-datetimez)
+]
+
+[tool.setuptools.packages.find]
+include = [ "hyve_flow*" ]
+where = [ "src" ]
+
+[tool.setuptools.dynamic]
+readme = {file = ["README.md"], content-type = "text/markdown"}
+
+[tool.setuptools_scm]
+# PyPI rejects local version identifiers, so untagged builds must not carry the
+# `+g<sha>` suffix that the default scheme appends.
+local_scheme = "no-local-version"
+fallback_version = "0.0.0"
