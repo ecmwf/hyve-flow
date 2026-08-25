@@ -1,4 +1,12 @@
 #! /usr/bin/env python3
+
+# /// script
+# dependencies = [
+#   "annotated-types",
+#   "conflator",
+# ]
+# ///
+
 import glob
 import os
 import shutil
