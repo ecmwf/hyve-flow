@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: 2026 European Centre for Medium-Range Weather Forecasts (ECMWF)
+SPDX-License-Identifier: Apache-2.0
+-->
+
 # Hyve Flow
 
 Reusable [pyflow](https://github.com/ecmwf/pyflow) suite-building components for
@@ -61,3 +66,10 @@ environment provisioned separately by the wellies tool store. `hyve_flow` is del
 *not* part of that environment, and so declares no console entry points — the scripts are
 located as package data via `importlib.resources.files("hyve_flow.scripts")` rather than
 installed as commands.
+
+## Licence
+
+hyve-flow is licensed under the Apache Licence, Version 2.0; see [LICENSE](LICENSE) and
+[NOTICE](NOTICE), which also carry ECMWF's intergovernmental notice. Every file declares its
+copyright and licence with [SPDX](https://spdx.dev) tags following the
+[REUSE](https://reuse.software) specification, which `reuse lint` checks in pre-commit.

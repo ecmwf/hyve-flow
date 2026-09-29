@@ -1,0 +1,17 @@
+version = 1
+
+# Cover the human-facing LICENSE and NOTICE files, which live outside LICENSES/.
+[[annotations]]
+path = ["LICENSE", "NOTICE"]
+precedence = "closest"
+SPDX-FileCopyrightText = "2025-2026 European Centre for Medium-Range Weather Forecasts (ECMWF)"
+SPDX-License-Identifier = "Apache-2.0"
+
+# Cover files that cannot carry a comment: the generated lock file, the
+# interpreter pin (read by tools that may not accept comments) and the empty
+# PEP 561 marker.
+[[annotations]]
+path = ["uv.lock", ".python-version", "src/hyve_flow/py.typed"]
+precedence = "closest"
+SPDX-FileCopyrightText = "2026 European Centre for Medium-Range Weather Forecasts (ECMWF)"
+SPDX-License-Identifier = "Apache-2.0"

@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 European Centre for Medium-Range Weather Forecasts (ECMWF)
+# SPDX-License-Identifier: Apache-2.0
+
 """Shared fixtures for the hyve-flow test suite.
 
 ``pyflow`` needs the ``ecflow`` Python bindings, which are not distributed on
