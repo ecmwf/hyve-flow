@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 European Centre for Medium-Range Weather Forecasts (ECMWF)
+# SPDX-License-Identifier: Apache-2.0
+
 """hyve-flow builds task scripts; it must never be a dependency of one.
 
 The generated tasks run in an environment provisioned by the wellies tool store
